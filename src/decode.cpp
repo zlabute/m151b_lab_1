@@ -269,7 +269,10 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rs2 = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm =(int32_t(instr_code) >> 25); // Done signed 7 bit extraction
+    imm = ((int32_t(instr_code & 0xFE000000) >> 20) |
+           ((instr_code >> 7) & 0x1F )); // Done signed 7 bit extraction
+
+    imm = (imm << 20) >> 20;
   } break;
 
   case InstType::B: {
@@ -290,14 +293,20 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rd  = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = // TODO:
+    imm = instr_code & 0xFFFFF000; // extract upper 20 bits and keeps them unshifted
   } break;
 
   case InstType::J: {
     exe_flags.use_rd  = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = // TODO:
+    imm = ((int32_t(instr_code & 0x80000000) >> 11) |
+           (instr_code & 0xFF000) |
+           ((instr_code & 0x1000000) >> 9) |
+           ((instr_code >> 20) & 0x7FE));
+
+    imm <<= 1;
+    imm = (imm << 11) >> 11;
   } break;
 
   default:
@@ -312,7 +321,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   switch (opcode) {
   case Opcode::LUI: {
     // RV32I: LUI
-    alu_op = // TODO:
+    alu_op = AluOp::LUI; // TODO:
     break;
   }
   case Opcode::AUIPC: {
