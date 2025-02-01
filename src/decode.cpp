@@ -236,7 +236,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_rs1 = 1;
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
-      imm = // TODO:
+      imm = (int32_t(instr_code) >> 20); // Done 12 bit immediate // check on this
       break;
     case Opcode::L:
     case Opcode::JALR: {
@@ -244,7 +244,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_rs1 = 1;
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
-      imm = // TODO:
+      imm = (int32_t(instr_code) >> 20); // Done 12 bit immediate // check on this
     } break;
     case Opcode::SYS: {
       exe_flags.use_imm = 1;
@@ -255,7 +255,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
           exe_flags.use_rs1 = 1;
         }
       }
-      imm = // TODO:
+      imm = (instr_code >> 20) & 0xFFF; // Done unsigned 12 bit extraction
     } break;
     case Opcode::FENCE:
       break;
@@ -269,7 +269,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rs2 = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = // TODO:
+    imm =(int32_t(instr_code) >> 25); // Done signed 7 bit extraction
   } break;
 
   case InstType::B: {
@@ -277,7 +277,13 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rs2 = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = // TODO:
+    imm = ((int32_t(instr_code & 0x80000000) >> 19) | //extract sign bit
+          ((instr_code & 0x80) << 4) | // extract bit 11
+          ((instr_code >> 20) & 0x7E0) | // extract bits 10-5
+          ((instr_code >> 7) & 0x1E)); // extract bits 4-1
+
+    imm <<= 1; // shift left 1 to word align
+    imm = (imm << 19) >> 19; //ensures sign extension correctlyu for negative values
   } break;
 
   case InstType::U: {
