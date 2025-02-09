@@ -42,43 +42,43 @@ uint32_t Core::alu_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_data
   case AluOp::NONE:
     break;
   case AluOp::ADD: {
-    rd_data = // TODO:
+    rd_data = alu_s1 + alu_s2; //done
     break;
   }
   case AluOp::SUB: {
-    rd_data = // TODO:
+    rd_data = alu_s1 - alu_s2; //done
     break;
   }
   case AluOp::AND: {
-    rd_data = // TODO:
+    rd_data = alu_s1 & alu_s2; //done
     break;
   }
   case AluOp::OR: {
-    rd_data = // TODO:
+    rd_data = alu_s1 | alu_s2; //done
     break;
   }
   case AluOp::XOR: {
-    rd_data = // TODO:
+    rd_data = alu_s1 ^ alu_s2; //done
     break;
   }
   case AluOp::SLL: {
-    rd_data = // TODO:
+    rd_data = alu_s1 << (alu_s2 & 0x1f); //done
     break;
   }
   case AluOp::SRL: {
-    rd_data = // TODO:
+    rd_data = alu_s1 >> (alu_s2 & 0x1f); //done
     break;
   }
   case AluOp::SRA: {
-    rd_data = // TODO:
+    rd_data = int32_t(alu_s1) >> (alu_s2 & 0x1F); //done
     break;
   }
   case AluOp::LTI: {
-    rd_data = // TODO:
+    rd_data = (int32_t)alu_s1 < (int32_t)alu_s2 ? 1 : 0; //done
     break;
   }
   case AluOp::LTU: {
-    rd_data = // TODO:
+    rd_data = alu_s1 < alu_s2 ? 1 : 0; //done
     break;
   }
   default:
@@ -98,31 +98,31 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
     break;
   case BrOp::JAL:
   case BrOp::JALR: {
-    br_taken = // TODO:
+    br_taken = true; //done
     break;
   }
   case BrOp::BEQ: {
-    br_taken = // TODO:
+    br_taken = (rs1_data == rs2_data); //done
     break;
   }
   case BrOp::BNE: {
-    br_taken = // TODO:
+    br_taken = (rs1_data != rs2_data); //done
     break;
   }
   case BrOp::BLT: {
-    br_taken = // TODO:
+    br_taken = ((int32_t)rs1_data < (int32_t)rs2_data); //done
     break;
   }
   case BrOp::BGE: {
-    br_taken = // TODO:
+    br_taken = ((int32_t)rs1_data >= (int32_t)rs2_data); //done
     break;
   }
   case BrOp::BLTU: {
-    br_taken = // TODO:
+    br_taken = (rs1_data < rs2_data); //done
     break;
   }
   case BrOp::BGEU: {
-    br_taken = // TODO:
+    br_taken = (rs1_data >= rs2_data); //done
     break;
   }
   default:
@@ -135,11 +135,11 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
     if (br_taken) {
       uint32_t next_PC = PC + 4;
       if (br_op == BrOp::JAL || br_op == BrOp::JALR) {
-        rd_data = // TODO:
+        rd_data = next_PC; //done
       }
       // check misprediction
       if (br_op != BrOp::JAL && br_target != next_PC) {
-        PC_ = // TODO:
+        PC_ = br_target; //done
         // flush pipeline
         if_id_.reset();
         fetch_stalled_ = false;
@@ -169,11 +169,11 @@ uint32_t Core::mem_access(const Instr &instr, uint32_t rd_data, uint32_t rs2_dat
       rd_data = sext(read_data, data_width);
       break;
     case 2: // RV32I: LW
-      rd_data = // TODO:
+      rd_data = read_data; // done
       break;
     case 4: // RV32I: LBU
     case 5: // RV32I: LHU
-      rd_data = // TODO:
+      rd_data = zext(read_data, data_width); // done
       break;
     default:
       std::abort();

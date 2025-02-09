@@ -391,7 +391,8 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   }
   case Opcode::B: { //done 
     exe_flags.alu_s1_PC = 1;
-    alu_op = AluOp::ADD; //Alu only used to determine the target jump address, conditionals handled in execute.cpp
+    alu_op = AluOp::ADD; 
+    //I'm not sure if Alu is used to determine the target jump address or the conditionals both seem to be handled in execute.cpp
     switch (func3) {
     case 0:  // BEQ: Branch if Equal
         br_op = BrOp::BEQ;
@@ -418,12 +419,12 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   }
   case Opcode::JAL: { //done
     exe_flags.alu_s1_PC = 1;
-    alu_op = AluOp::ADD;
+    alu_op = AluOp::ADD;   //I'm not sure if Alu is used to determine the target jump address or the conditionals both seem to be handled in execute.cpp
     br_op =  BrOp::JAL;
     break;
   }
   case Opcode::JALR: { //done
-    alu_op = AluOp::ADD;
+    alu_op = AluOp::ADD;  //I'm not sure if Alu is used to determine the target jump address or the conditionals both seem to be handled in execute.cpp
     br_op = BrOp::JALR;
     break;
   }
