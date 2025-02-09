@@ -321,47 +321,121 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   switch (opcode) {
   case Opcode::LUI: {
     // RV32I: LUI
-    alu_op = AluOp::LUI; // TODO:
+    alu_op = AluOp::NONE; //done? why would this be none tho if they ar
     break;
   }
   case Opcode::AUIPC: {
     // RV32I: AUIPC
-    alu_op = // TODO:
+    alu_op = AluOp::ADD;   //done
     exe_flags.alu_s1_PC = 1;
     break;
   }
-  case Opcode::R: {
-    alu_op = // TODO:
+  case Opcode::R: { //done
+    switch (func3) {
+    case 0:  // ADD / SUB
+        alu_op = func7 ? AluOp::ADD : AluOp::SUB;  
+        break;
+    case 1:  // SLL: Shift Left Logical
+        alu_op = AluOp::SLL;
+        break;
+    case 2:  // SLT: Set Less Than
+        alu_op = AluOp::LTI;
+        break;
+    case 3:  // SLTU: Set Less Than Unsigned
+        alu_op = AluOp::LTU;
+        break;
+    case 4:  // XOR
+        alu_op = AluOp::XOR;
+        break;
+    case 5:  // SRLI: Shift Right Logical / SRAI: Shift Right Arithmetic
+        alu_op = (func7 & 0x20) ? AluOp::SRA : AluOp::SRL;
+        break;
+    case 6:  // OR
+        alu_op = AluOp::OR;
+        break;
+    case 7:  // AND
+        alu_op = AluOp::AND;
+        break;
+    default:
+        std::abort();  // Handle invalid func3
+    }
   }
-  case Opcode::I: {
-    alu_op = // TODO: 
+  case Opcode::I: { //done
+    case 0:  // ADD / SUB
+        alu_op = AluOp::ADD;
+        break;
+    case 1:  // SLL: Shift Left Logical
+        alu_op = AluOp::SLL;
+        break;
+    case 2:  // SLT: Set Less Than
+        alu_op = AluOp::LTI;
+        break;
+    case 3:  // SLTU: Set Less Than Unsigned
+        alu_op = AluOp::LTU;
+        break;
+    case 4:  // XOR
+        alu_op = AluOp::XOR;
+        break;
+    case 5:  // SRLI: Shift Right Logical / SRAI: Shift Right Arithmetic
+        alu_op = (func7 & 0x20) ? AluOp::SRA : AluOp::SRL;
+        break;
+    case 6:  // OR
+        alu_op = AluOp::OR;
+        break;
+    case 7:  // AND
+        alu_op = AluOp::AND;
+        break;
+    default:
+        std::abort();  // Handle invalid func3
+    }
   }
-  case Opcode::B: {
+  case Opcode::B: { //done 
     exe_flags.alu_s1_PC = 1;
-    alu_op = // TODO:
-    br_op = // TODO:
+    alu_op = AluOp::ADD; //Alu only used to determine the target jump address, conditionals handled in execute.cpp
+    switch (func3) {
+    case 0:  // BEQ: Branch if Equal
+        br_op = BrOp::BEQ;
+        break;
+    case 1:  // BNE: Branch if Not Equal
+        br_op = BrOp::BNE;
+        break;
+    case 4:  // BLT: Branch if Less Than
+        br_op = BrOp::BLT;
+        break;
+    case 5:  // BGE: Branch if Greater Than or Equal
+        br_op = BrOp::BGE;
+        break;
+    case 6:  // BLTU: Branch if Less Than Unsigned
+        br_op = BrOp::BLTU;
+        break;
+    case 7:  // BGEU: Branch if Greater Than or Equal Unsigned
+        br_op = BrOp::BGEU;
+        break;
+    default:
+        std::abort();  // Handle invalid func3
+    }
     break;
   }
-  case Opcode::JAL: {
+  case Opcode::JAL: { //done
     exe_flags.alu_s1_PC = 1;
-    alu_op = // TODO:
-    br_op = // TODO:
+    alu_op = AluOp::ADD;
+    br_op =  BrOp::JAL;
     break;
   }
-  case Opcode::JALR: {
-    alu_op = // TODO:
-    br_op = // TODO:
+  case Opcode::JALR: { //done
+    alu_op = AluOp::ADD;
+    br_op = BrOp::JALR;
     break;
   }
-  case Opcode::L: {
+  case Opcode::L: { //done
     // RV32I: LB, LH, LW, LBU, LHU
-    alu_op = // TODO:
+    alu_op = AluOp::ADD;
     exe_flags.is_load = 1;
     break;
   }
-  case Opcode::S: {
+  case Opcode::S: { //done
     // RV32I: SB, SH, SW
-    alu_op = // TODO:
+    alu_op = AluOp::ADD;
     exe_flags.is_store = 1;
     break;
   }
