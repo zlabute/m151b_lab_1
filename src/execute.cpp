@@ -140,7 +140,7 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
       }
       // check misprediction
       if (br_op != BrOp::JAL && br_target != next_PC) {
-        PC_ = next_PC; //done
+        PC_ = br_target; //done
         // flush pipeline
         if_id_.reset();
         fetch_stalled_ = false;

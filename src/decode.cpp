@@ -241,9 +241,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
       imm = (instr_code >> 20) & 0xFFF;
-      if (imm & 0x800) {
-          imm |= 0xFFFFF000;
-      }
+      imm = sext(imm, 12);
       break;
     case Opcode::L:
     case Opcode::JALR: {
@@ -252,9 +250,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
       imm = (instr_code >> 20) & 0xFFF;
-      if (imm & 0x800) {
-          imm |= 0xFFFFF000;
-      }
+      imm = sext(imm, 12);
     } break;
     case Opcode::SYS: {
       exe_flags.use_imm = 1;
