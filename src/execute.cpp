@@ -96,9 +96,14 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
   switch (br_op) {
   case BrOp::NONE:
     break;
-  case BrOp::JAL:
-  case BrOp::JALR: {
+  case BrOp::JAL: {
     br_taken = true; //done
+    break;
+  }
+  case BrOp::JALR: {
+    br_taken = true;
+    rd_data = PC + 4;  // Store return address
+    PC_ = (rs1_data + instr.getImm()) & ~1;  // Ensure alignment
     break;
   }
   case BrOp::BEQ: {

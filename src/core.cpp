@@ -67,12 +67,16 @@ void Core::if_stage() {
   if (fetch_stalled_ || !if_id_.empty())
     return;
 
+  //std::cout << "Fetching instruction at PC=0x" << std::hex << PC_ << std::dec << std::endl;
+
   // allocate a new uuid
   uint32_t uuid = uuid_ctr_++;
 
   // fetch next instruction from memory at PC address
   uint32_t instr_code = 0;
   mmu_.read(&instr_code, PC_, sizeof(uint32_t), 0);
+
+  //std::cout << "Fetched instruction: 0x" << std::hex << instr_code << std::dec << std::endl;
 
   DT(2, "IF: instr=0x" << instr_code << ", PC=0x" << std::hex << PC_ << std::dec << " (#" << uuid << ")");
 
@@ -203,7 +207,7 @@ bool Core::check_data_hazards(const Instr &instr) {
 
     if ((exe_flags.use_rs1 && instr.getRs1() != 0 && instr.getRs1() == mem_rd) || (exe_flags.use_rs2 && instr.getRs2() != 0 && instr.getRs2() == mem_rd))
     {
-      return True
+      return true;
     }
   }
 
@@ -232,10 +236,10 @@ bool Core::data_forwarding(uint32_t reg, uint32_t* data) {
     auto mem_rd = mem_instr.getRd();
     // TODO: check data forwarding from MEM/WB
 
-      if (!forwarded && !mem_wb_.empty()) {
-        *data = mem_data.result;
-        forwarded = true;
-      }
+    if (!forwarded && !mem_wb_.empty()) {
+      *data = mem_data.result;
+      forwarded = true;
+    }
   }
 
 

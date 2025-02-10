@@ -202,6 +202,9 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   auto instr = std::make_shared<Instr>();
   auto opcode = Opcode((instr_code >> shift_opcode) & mask_opcode);
 
+  //std::cout << "Decoding instruction: 0x" << std::hex << instr_code << std::dec << std::endl;
+  //std::cout << "Extracted Opcode: 0x" << std::hex << static_cast<int>(opcode) << std::dec << std::endl;
+
   auto func3 = (instr_code >> shift_func3) & mask_func3;
   auto func7 = (instr_code >> shift_func7) & mask_func7;
 
@@ -211,6 +214,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
 
   auto op_it = sc_instTable.find(opcode);
   if (op_it == sc_instTable.end()) {
+    
     std::cout << std::hex << "Error: invalid opcode: 0x" << static_cast<int>(opcode) << std::endl;
     return nullptr;
   }
@@ -236,7 +240,8 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_rs1 = 1;
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
-      imm = (int32_t(instr_code) >> 20); // Done 12 bit immediate // check on this
+      imm = int32_t(instr_code) >> 20;  // Done
+      imm = (imm << 20) >> 20; // Done
       break;
     case Opcode::L:
     case Opcode::JALR: {
@@ -269,10 +274,8 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rs2 = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = ((int32_t(instr_code & 0xFE000000) >> 20) |
-           ((instr_code >> 7) & 0x1F )); // Done signed 7 bit extraction
-
-    imm = (imm << 20) >> 20;
+    imm = ((instr_code >> 25) << 5) | ((instr_code >> 7) & 0x1F); // Done Extract imm[11:5] and imm[4:0]
+    imm = (imm << 20) >> 20;  // Sign-extend properly
   } break;
 
   case InstType::B: {
@@ -280,13 +283,14 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rs2 = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = ((int32_t(instr_code & 0x80000000) >> 19) | //extract sign bit
-          ((instr_code & 0x80) << 4) | // extract bit 11
-          ((instr_code >> 20) & 0x7E0) | // extract bits 10-5
-          ((instr_code >> 7) & 0x1E)); // extract bits 4-1
+    // Correct immediate extraction for B-Type (branches)
+    imm = ((instr_code & 0x80000000) >> 19) |  // Sign bit (bit 31)
+          ((instr_code & 0x80) << 4) |        // imm[11] (bit 7)
+          ((instr_code >> 25) & 0x3F) << 5 |  // imm[10:5] (bits 30:25)
+          ((instr_code >> 8) & 0xF) << 1;     // imm[4:1] (bits 11:8)
 
-    imm <<= 1; // shift left 1 to word align
-    imm = (imm << 19) >> 19; //ensures sign extension correctlyu for negative values
+    imm <<= 1;  // Word-align
+    imm = (imm << 19) >> 19;  
   } break;
 
   case InstType::U: {
@@ -300,13 +304,12 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_rd  = 1;
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
-    imm = ((int32_t(instr_code & 0x80000000) >> 11) |
-           (instr_code & 0xFF000) |
-           ((instr_code & 0x1000000) >> 9) |
-           ((instr_code >> 20) & 0x7FE));
-
-    imm <<= 1;
-    imm = (imm << 11) >> 11;
+    imm = ((instr_code & 0x80000000) >> 11) |  // Done Extract sign bit (bit 31)
+      (instr_code & 0xFF000) |  // Extract imm[19:12] (bits 19:12)
+      ((instr_code >> 9) & 0x800) |  // Extract imm[11] (bit 20)
+      ((instr_code >> 20) & 0x7FE);  // Extract imm[10:1] (bits 30:21)
+    imm <<= 1;  // Word-align
+    imm = (imm << 11) >> 11;  // Sign-extend properly
   } break;
 
   default:
@@ -333,7 +336,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   case Opcode::R: { //done
     switch (func3) {
     case 0:  // ADD / SUB
-        alu_op = func7 ? AluOp::ADD : AluOp::SUB;  
+        alu_op = (func7 == 0x20) ? AluOp::SUB : AluOp::ADD;
         break;
     case 1:  // SLL: Shift Left Logical
         alu_op = AluOp::SLL;
@@ -359,8 +362,10 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     default:
         std::abort();  // Handle invalid func3
     }
+    break;
   }
   case Opcode::I: { //done
+    switch (func3) {
     case 0:  // ADD / SUB
         alu_op = AluOp::ADD;
         break;
@@ -388,6 +393,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     default:
         std::abort();  // Handle invalid func3
     }
+    break;
   }
   case Opcode::B: { //done 
     exe_flags.alu_s1_PC = 1;
