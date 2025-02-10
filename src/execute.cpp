@@ -96,14 +96,9 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
   switch (br_op) {
   case BrOp::NONE:
     break;
-  case BrOp::JAL: {
-    br_taken = true; //done
-    break;
-  }
+  case BrOp::JAL:
   case BrOp::JALR: {
-    br_taken = true;
-    // rd_data = PC + 4;  // Store return address
-    // PC_ = (rs1_data + instr.getImm()) & ~1;   Ensure alignment
+    br_taken = true; // done
     break;
   }
   case BrOp::BEQ: {
@@ -141,7 +136,7 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
     if (br_taken) {
       uint32_t next_PC = PC + 4;
       if (br_op == BrOp::JAL || br_op == BrOp::JALR) {
-        rd_data = br_target; //done
+        rd_data = next_PC; //done
       }
       // check misprediction
       if (br_op != BrOp::JAL && br_target != next_PC) {

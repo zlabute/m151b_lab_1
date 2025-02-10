@@ -190,24 +190,17 @@ bool Core::check_data_hazards(const Instr &instr) {
   if (!ex_mem_.empty()) 
   {
     auto& ex_data = ex_mem_.data();
-    // TODO: check LDAD instruction data hazards in EX/MEM
+    // TODO: check LOAD instruction data hazards in EX/MEM
     auto& ex_instr = *ex_data.instr;
     auto ex_rd = ex_instr.getRd();
 
-    if ((exe_flags.use_rs1 && instr.getRs1() != 0 && instr.getRs1() == ex_rd) || (exe_flags.use_rs2 && instr.getRs2() != 0 && instr.getRs2() == ex_rd))  {
-      return true;
-    }
-  }
-
-  if (!mem_wb_.empty())
-  {
-    auto& mem_data = mem_wb_.data();
-    auto& mem_instr = *mem_data.instr;
-    auto mem_rd = mem_instr.getRd();
-
-    if ((exe_flags.use_rs1 && instr.getRs1() != 0 && instr.getRs1() == mem_rd) || (exe_flags.use_rs2 && instr.getRs2() != 0 && instr.getRs2() == mem_rd))
-    {
-      return true;
+    // Check for RAW hazards: if the current instruction reads rs1 or rs2, and the EX/MEM instruction writes to rd
+    if ((exe_flags.use_rs1 && instr.getRs1() == ex_rd && ex_rd != 0) || 
+        (exe_flags.use_rs2 && instr.getRs2() == ex_rd && ex_rd != 0)) {
+      
+      if (ex_instr.getOpcode() == Opcode::L) {
+        return true;  // Load-use hazard detected, stall the pipeline
+      }
     }
   }
 
@@ -217,15 +210,16 @@ bool Core::check_data_hazards(const Instr &instr) {
 bool Core::data_forwarding(uint32_t reg, uint32_t* data) {
   bool forwarded = false;
 
+  // Check data forwarding from EX/MEM
   if (!ex_mem_.empty()) {
     auto& ex_data = ex_mem_.data();
     auto& ex_instr = *ex_data.instr;
     // TODO: check data forwarding from EX/MEM
     auto ex_rd = ex_instr.getRd();
 
-    if (reg != 0 && ex_rd == reg)
-    {
-      *data = ex_data.result;
+    // Forward if EX/MEM instruction is writing to rd and rd matches the required register
+    if (ex_rd != 0 && ex_rd == reg && ex_instr.getExeFlags().use_rd) {
+      *data = ex_data.result;  // Forward the result from the EX/MEM stage
       forwarded = true;
     }
   }
@@ -233,11 +227,12 @@ bool Core::data_forwarding(uint32_t reg, uint32_t* data) {
   if (!forwarded && !mem_wb_.empty()) {
     auto& mem_data = mem_wb_.data();
     auto& mem_instr = *mem_data.instr;
-    auto mem_rd = mem_instr.getRd();
     // TODO: check data forwarding from MEM/WB
+    auto mem_rd = mem_instr.getRd();
 
-    if (!forwarded && !mem_wb_.empty()) {
-      *data = mem_data.result;
+    // Forward if MEM/WB instruction is writing to rd and rd matches the required register
+    if (mem_rd != 0 && mem_rd == reg && mem_instr.getExeFlags().use_rd) {
+      *data = mem_data.result;  // Forward the result from the MEM/WB stage
       forwarded = true;
     }
   }

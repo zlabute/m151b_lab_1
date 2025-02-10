@@ -250,6 +250,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
       imm = (int32_t(instr_code) >> 20); // Done 12 bit immediate // check on this
+      imm = (imm << 20) >> 20; // Done
     } break;
     case Opcode::SYS: {
       exe_flags.use_imm = 1;
@@ -308,7 +309,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       (instr_code & 0xFF000) |  // Extract imm[19:12] (bits 19:12)
       ((instr_code >> 9) & 0x800) |  // Extract imm[11] (bit 20)
       ((instr_code >> 20) & 0x7FE);  // Extract imm[10:1] (bits 30:21)
-    imm <<= 1;  // Word-align
+    //imm <<= 1;  // Word-align
     imm = (imm << 11) >> 11;  // Sign-extend properly
   } break;
 
