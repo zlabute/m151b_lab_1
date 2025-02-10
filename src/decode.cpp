@@ -240,8 +240,10 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_rs1 = 1;
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
-      imm = int32_t(instr_code) >> 20;  // Done
-      imm = (imm << 20) >> 20; // Done
+      imm = (instr_code >> 20) & 0xFFF;
+      if (imm & 0x800) {
+          imm |= 0xFFFFF000;
+      }
       break;
     case Opcode::L:
     case Opcode::JALR: {
@@ -249,8 +251,10 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       exe_flags.use_rs1 = 1;
       exe_flags.use_imm = 1;
       exe_flags.alu_s2_imm = 1;
-      imm = (int32_t(instr_code) >> 20); // Done 12 bit immediate // check on this
-      imm = (imm << 20) >> 20; // Done
+      imm = (instr_code >> 20) & 0xFFF;
+      if (imm & 0x800) {
+          imm |= 0xFFFFF000;
+      }
     } break;
     case Opcode::SYS: {
       exe_flags.use_imm = 1;
@@ -325,7 +329,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
   switch (opcode) {
   case Opcode::LUI: {
     // RV32I: LUI
-    alu_op = AluOp::NONE; //done? why would this be none tho if they ar
+    alu_op = AluOp::ADD; //done? why would this be none tho if they ar
     break;
   }
   case Opcode::AUIPC: {

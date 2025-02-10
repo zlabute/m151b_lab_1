@@ -195,14 +195,16 @@ bool Core::check_data_hazards(const Instr &instr) {
     auto ex_rd = ex_instr.getRd();
 
     // Check for RAW hazards: if the current instruction reads rs1 or rs2, and the EX/MEM instruction writes to rd
-    if ((exe_flags.use_rs1 && instr.getRs1() == ex_rd && ex_rd != 0) || 
-        (exe_flags.use_rs2 && instr.getRs2() == ex_rd && ex_rd != 0)) {
+    if ((exe_flags.use_rs1 && instr.getRs1() == ex_rd) || 
+        (exe_flags.use_rs2 && instr.getRs2() == ex_rd)) {
       
-      if (ex_instr.getOpcode() == Opcode::L) {
+      if (ex_instr.getExeFlags().is_load) {
         return true;  // Load-use hazard detected, stall the pipeline
       }
     }
   }
+
+  
 
   return false;
 }
