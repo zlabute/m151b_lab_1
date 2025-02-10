@@ -102,12 +102,13 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
   }
   case BrOp::JALR: {
     br_taken = true;
-    rd_data = PC + 4;  // Store return address
-    PC_ = (rs1_data + instr.getImm()) & ~1;  // Ensure alignment
+    // rd_data = PC + 4;  // Store return address
+    // PC_ = (rs1_data + instr.getImm()) & ~1;   Ensure alignment
     break;
   }
   case BrOp::BEQ: {
     br_taken = (rs1_data == rs2_data); //done
+
     break;
   }
   case BrOp::BNE: {
@@ -140,11 +141,11 @@ uint32_t Core::branch_unit(const Instr &instr, uint32_t rs1_data, uint32_t rs2_d
     if (br_taken) {
       uint32_t next_PC = PC + 4;
       if (br_op == BrOp::JAL || br_op == BrOp::JALR) {
-        rd_data = next_PC; //done
+        rd_data = br_target; //done
       }
       // check misprediction
       if (br_op != BrOp::JAL && br_target != next_PC) {
-        PC_ = br_target; //done
+        PC_ = next_PC; //done
         // flush pipeline
         if_id_.reset();
         fetch_stalled_ = false;
