@@ -276,23 +276,24 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
     exe_flags.use_imm = 1;
     exe_flags.alu_s2_imm = 1;
     imm = ((instr_code >> 25) << 5) | ((instr_code >> 7) & 0x1F); // Done Extract imm[11:5] and imm[4:0]
-    imm = (imm << 20) >> 20;  // Sign-extend properly
+    imm = sext(imm, 12);  
   } break;
 
   case InstType::B: {
-    exe_flags.use_rs1 = 1;
-    exe_flags.use_rs2 = 1;
-    exe_flags.use_imm = 1;
-    exe_flags.alu_s2_imm = 1;
-    // Correct immediate extraction for B-Type (branches)
-    imm = ((instr_code & 0x80000000) >> 19) |  // Sign bit (bit 31)
-          ((instr_code & 0x80) << 4) |        // imm[11] (bit 7)
-          ((instr_code >> 25) & 0x3F) << 5 |  // imm[10:5] (bits 30:25)
-          ((instr_code >> 8) & 0xF) << 1;     // imm[4:1] (bits 11:8)
+  exe_flags.use_rs1 = 1;
+  exe_flags.use_rs2 = 1;
+  exe_flags.use_imm = 1;
+  exe_flags.alu_s2_imm = 1;
 
-    imm <<= 1;  // Word-align
-    imm = (imm << 19) >> 19;  
-  } break;
+  imm = ((instr_code & 0x80000000) >> 19) |  // imm[12] (bit 31) -> bit 12
+        ((instr_code & 0x80) << 4) |         // imm[11] (bit 7) -> bit 11
+        ((instr_code >> 20) & 0x7E0) |       // imm[10:5] (bits 30:25) -> bits 10:5
+        ((instr_code >> 7) & 0x1E);          // imm[4:1] (bits 11:8) -> bits 4:1
+
+  // Sign-extend the 13-bit immediate to 32 bits
+  imm = sext(imm, 13);
+
+} break;
 
   case InstType::U: {
     exe_flags.use_rd  = 1;
@@ -310,7 +311,7 @@ std::shared_ptr<Instr> Core::decode(uint32_t instr_code) const {
       ((instr_code >> 9) & 0x800) |  // Extract imm[11] (bit 20)
       ((instr_code >> 20) & 0x7FE);  // Extract imm[10:1] (bits 30:21)
     //imm <<= 1;  // Word-align
-    imm = (imm << 11) >> 11;  // Sign-extend properly
+    imm = sext(imm, 21);  // Sign-extend properly
   } break;
 
   default:

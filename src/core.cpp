@@ -184,97 +184,62 @@ void Core::wb_stage() {
   mem_wb_.pop();
 }
 
-// bool Core::check_data_hazards(const Instr &instr) {
-//   auto exe_flags = instr.getExeFlags();
-
-//   if (!ex_mem_.empty()) 
-//   {
-//     auto& ex_data = ex_mem_.data();
-//     // TODO: check LOAD instruction data hazards in EX/MEM
-//     auto& ex_instr = *ex_data.instr;
-//     auto ex_rd = ex_instr.getRd();
-
-//     // Check for RAW hazards: if the current instruction reads rs1 or rs2, and the EX/MEM instruction writes to rd
-//     if ((exe_flags.use_rs1 && instr.getRs1() == ex_rd) || 
-//         (exe_flags.use_rs2 && instr.getRs2() == ex_rd)) {
-      
-//       if (ex_instr.getExeFlags().is_load) {
-//         return true;  // Load-use hazard detected, stall the pipeline
-//       }
-//     }
-//   }
-
-  
-
-//   return false;
-// }
-
 bool Core::check_data_hazards(const Instr &instr) {
-  if (!ex_mem_.empty()) {
+  auto exe_flags = instr.getExeFlags();
+
+  if (!ex_mem_.empty()) 
+  {
     auto& ex_data = ex_mem_.data();
+    // TODO: check LOAD instruction data hazards in EX/MEM
     auto& ex_instr = *ex_data.instr;
-    
-    // Only stall for load instructions when forwarding isn't possible
-    if (ex_instr.getExeFlags().is_load) {
-      if ((instr.getExeFlags().use_rs1 && instr.getRs1() == ex_instr.getRd()) ||
-          (instr.getExeFlags().use_rs2 && instr.getRs2() == ex_instr.getRd())) {
-        return true; // Stall required for load-use hazard
+    auto ex_rd = ex_instr.getRd();
+
+   
+    if ((exe_flags.use_rs1 && instr.getRs1() == ex_rd) || 
+        (exe_flags.use_rs2 && instr.getRs2() == ex_rd)) {
+      
+      if (ex_instr.getExeFlags().is_load) {
+        return true;  // Load-use hazard detected, stall the pipeline
       }
     }
   }
 
+  
+
   return false;
 }
+
+
 
 bool Core::data_forwarding(uint32_t reg, uint32_t* data) {
   bool forwarded = false;
 
-  // Check data forwarding from EX/MEM
-  // if (!ex_mem_.empty()) {
-  //   auto& ex_data = ex_mem_.data();
-  //   auto& ex_instr = *ex_data.instr;
-  //   // TODO: check data forwarding from EX/MEM
-  //   auto ex_rd = ex_instr.getRd();
-
-  //   // Forward if EX/MEM instruction is writing to rd and rd matches the required register
-  //   if (ex_rd != 0 && ex_rd == reg && ex_instr.getExeFlags().use_rd) {
-  //     *data = ex_data.result;  // Forward the result from the EX/MEM stage
-  //     forwarded = true;
-  //   }
-  // }
-
-  // if (!forwarded && !mem_wb_.empty()) {
-  //   auto& mem_data = mem_wb_.data();
-  //   auto& mem_instr = *mem_data.instr;
-  //   // TODO: check data forwarding from MEM/WB
-  //   auto mem_rd = mem_instr.getRd();
-
-  //   // Forward if MEM/WB instruction is writing to rd and rd matches the required register
-  //   if (mem_rd != 0 && mem_rd == reg && mem_instr.getExeFlags().use_rd) {
-  //     *data = mem_data.result;  // Forward the result from the MEM/WB stage
-  //     forwarded = true;
-  //   }
-  // }
-
+  //Check data forwarding from EX/MEM
   if (!ex_mem_.empty()) {
-  auto& ex_data = ex_mem_.data();
-  auto& ex_instr = *ex_data.instr;
-  if (ex_instr.getExeFlags().use_rd && ex_instr.getRd() != 0 && ex_instr.getRd() == reg) {
-    *data = ex_data.result;
-    return true;
+    auto& ex_data = ex_mem_.data();
+    auto& ex_instr = *ex_data.instr;
+    // TODO: check data forwarding from EX/MEM
+    auto ex_rd = ex_instr.getRd();
+
+   
+    if (ex_rd != 0 && ex_rd == reg && ex_instr.getExeFlags().use_rd) {
+      *data = ex_data.result;  // Forward the result from the EX/MEM stage
+      forwarded = true;
+    }
   }
-}
 
-if (!forwarded && !mem_wb_.empty()) {
-  auto& mem_data = mem_wb_.data();
-  auto& mem_instr = *mem_data.instr;
-  if (mem_instr.getExeFlags().use_rd && mem_instr.getRd() != 0 && mem_instr.getRd() == reg) {
-    *data = mem_data.result;
-    return true;
+  if (!forwarded && !mem_wb_.empty()) {
+    auto& mem_data = mem_wb_.data();
+    auto& mem_instr = *mem_data.instr;
+    // TODO: check data forwarding from MEM/WB
+    auto mem_rd = mem_instr.getRd();
+
+   
+    if (mem_rd != 0 && mem_rd == reg && mem_instr.getExeFlags().use_rd) {
+      *data = mem_data.result;  // Forward the result from the MEM/WB stage
+      forwarded = true;
+    }
   }
-}
-
-
 
   return forwarded;
 }
